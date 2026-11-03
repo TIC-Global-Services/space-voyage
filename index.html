@@ -1,607 +1,234 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Planet Jumping</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TheInternetCompany</title>
+<meta name="description" content="TheInternetCompany is a 3D house, website, app and design studio. A jellyfish drifts through a lilac sky while huge words wrap around it as you scroll.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Outfit:wght@600&family=Space+Mono&display=swap" rel="stylesheet">
 <style>
-@font-face{font-family:"SF Pro";font-weight:400;src:local("SF Pro Text"),local("SF Pro Display"),local("SF Pro"),local("Arial")}
-@font-face{font-family:"SF Pro";font-weight:700;src:local("SF Pro Text Bold"),local("SF Pro Display Bold"),local("SF Pro Bold"),local("Arial Bold")}
-@font-face{font-family:"SF Pro Thin";font-weight:100;src:local("SF Pro Display Thin"),local("SF Pro Thin"),local("Helvetica Neue Thin"),local("Arial")}
-@font-face{font-family:"Aalto";font-weight:400;src:local("Aalto"),local("Arial Narrow"),local("Arial")}
-
-:root{font-family:'SF Pro',Arial,sans-serif;color:#fff;background:#090807;font-synthesis:none}
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden}
-button{font:inherit}
-.experience{position:relative;width:100%;height:100%;min-height:540px;overflow:hidden;background:#0a0908}
-.backgrounds,.background,.shade,.transition-layer,.transition-layer video{position:absolute;inset:0;width:100%;height:100%}
-.background{object-fit:cover;opacity:0;transition:opacity .8s ease}
-.background.is-visible{opacity:1}
-.shade{z-index:1;background:linear-gradient(to bottom,transparent 52%,rgba(0,0,0,.88) 100%);pointer-events:none}
-.chrome{position:absolute;z-index:4;transition:opacity .45s ease,filter .45s ease}
-.experience.is-transitioning .chrome{opacity:0;filter:blur(8px);pointer-events:none}
-
-/* header */
-.header{left:clamp(18px,1.95vw,28px);right:clamp(18px,1.95vw,28px);top:clamp(18px,3.1vh,28px);display:flex;justify-content:space-between;align-items:center}
-.header-actions{margin-left:auto;display:flex;align-items:center}
-.nav{display:flex;align-items:center;height:42px;padding:4px 5px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.1);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:999px}
-.nav a{color:#fff;text-decoration:none;padding:8px 19px;border-radius:999px;line-height:1}
-.nav a.active{background:#fff;color:#000}
-.menu{height:42px;padding:0 20px;border:0;border-radius:999px;background:#fff;color:#000;cursor:pointer}
-
-/* sidebar */
-.planet-list{left:clamp(18px,1.95vw,28px);top:50%;transform:translateY(-43%);display:flex;flex-direction:column;gap:6px;font-size:16px}
-.planet-item{display:flex;align-items:center;min-height:20px}
-.planet-item.active{font-size:18px;font-weight:700;gap:8px}
-.planet-item.active:before{content:'';width:16px;height:16px;border-radius:50%;background:#fff}
-
-/* portal */
-.portal-wrap{left:50%;top:50%;width:min(320px,31vw);transform:translate(-50%,-54%);perspective:none}
-.portal-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:16px;opacity:0}
-.portal-heading strong{font-size:18px;margin-left:8px}
-.portal{position:relative;display:block;width:100%;aspect-ratio:320/350;padding:0;overflow:visible;border:0;border-radius:90px;background:transparent;cursor:pointer;box-shadow:none;transform:none!important}
-.portal video,.portal img{visibility:hidden;position:absolute;width:1px;height:1px;pointer-events:none}
-.portal-canvas{position:fixed;inset:0;z-index:3;width:100%;height:100%;pointer-events:none}
-
-/* content */
-.planet-content{left:clamp(28px,4vw,58px);right:clamp(28px,3vw,44px);bottom:clamp(24px,3vh,30px);display:flex;justify-content:space-between;align-items:flex-end;gap:40px}
-.planet-content h1{font-family:Aalto,'Arial Narrow',sans-serif;font-size:clamp(128px,21.8vw,314px);font-weight:400;line-height:.72;margin:0 0 -.04em;letter-spacing:0;transform:translateX(-32px);opacity:0}
-.planet-content dl{width:min(447px,34vw);margin:0;font-size:16px}
-.fact{display:grid;grid-template-columns:138px 1fr;gap:18px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.48);opacity:0}
-.fact:last-child{border-bottom:0}
-.fact dt{font-weight:700}
-.fact dd{margin:0}
-
-/* misc */
-.transition-layer{display:none}
-.scene-canvas{display:none}
-.loading{position:absolute;z-index:12;left:50%;bottom:30px;transform:translateX(-50%);opacity:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;transition:opacity .2s}
-.experience.is-loading .loading{opacity:.8}
-.experience.is-transitioning .header,.experience.is-transitioning .planet-list{opacity:1;filter:none;pointer-events:auto}
-.experience.is-transitioning .shade{opacity:1}
-.experience.is-committing .background{transition:none!important}
-
-/* preloader */
-.preloader{position:absolute;inset:0;z-index:20;background:#000;overflow:hidden}
-.preloader video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.preloader-shade{position:absolute;inset:auto 0 0;height:35%;background:linear-gradient(to bottom,transparent,#000)}
-.preloader.is-background{z-index:0}
-.preloader.is-background .preloader-shade{opacity:0}
-.floating-logo{position:fixed;z-index:22;left:50%;top:50%;width:59px;height:58px;transform:translate(-50%,-50%);will-change:left,top,width,height,transform;
-  transition:left 2s cubic-bezier(.16,1,.3,1),top 2s cubic-bezier(.16,1,.3,1),width 2s cubic-bezier(.16,1,.3,1),height 2s cubic-bezier(.16,1,.3,1),transform 2s cubic-bezier(.16,1,.3,1)}
-.floating-logo.is-docked{left:clamp(18px,1.95vw,28px);top:clamp(18px,3.1vh,28px);width:37px;height:36px;transform:none}
-.floating-logo.is-settled{z-index:5}
-.preloader-count{position:fixed;z-index:22;left:50%;bottom:clamp(22px,3.1vh,28px);display:flex;align-items:flex-end;gap:4px;transform:translateX(-50%);font-family:'SF Pro',Arial,sans-serif;line-height:1}
-.preloader-count>span:first-child{font-family:'SF Pro Thin','SF Pro',Arial,sans-serif;font-size:64px;font-weight:100}
-.preloader-count .percent{font-size:24px;padding-bottom:4px}
-.preloader-count.is-leaving{animation:preload-count-out .75s cubic-bezier(.22,1,.36,1) both}
-@keyframes preload-count-out{to{opacity:0;filter:blur(7px);transform:translate(-50%,-34px)}}
-body:not(.preload-complete) .custom-cursor{opacity:0!important}
-
-/* cursor */
-html,body,button,a,.portal{cursor:none!important}
-.custom-cursor{display:block;position:fixed;left:0;top:0;z-index:100;width:1px;height:1px;pointer-events:none;opacity:0;transition:opacity .2s ease}
-.custom-cursor.is-visible{opacity:1}
-.cursor-dot,.cursor-orbit{position:absolute;left:0;top:0;border-radius:50%;transform:translate(-50%,-50%)}
-.cursor-dot{width:12px;height:12px;background:#fff}
-.cursor-orbit{width:36px;height:36px;border:1px solid #fff;background:rgba(255,255,255,.4);transition:transform .3s cubic-bezier(.22,1,.36,1)}
-.custom-cursor.is-enter .cursor-orbit{transform:translate(-50%,-50%) scale(1.16)}
-.cursor-label{position:absolute;top:26px;left:0;transform:translateX(-50%) translateY(-4px);font:16px/1.2 'SF Pro',Arial,sans-serif;white-space:nowrap;opacity:0;transition:opacity .2s ease,transform .3s cubic-bezier(.22,1,.36,1)}
-.custom-cursor.is-enter .cursor-label{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* entrance / switch animations */
-body:not(.intro-ready) .header,
-body:not(.intro-ready) .planet-list,
-body:not(.intro-ready) .planet-content h1,
-body:not(.intro-ready) .planet-content .fact{opacity:0}
-.intro-ready .header{animation:reveal-down .9s cubic-bezier(.22,1,.36,1) .1s both}
-.intro-ready .planet-list{animation:reveal-side .9s cubic-bezier(.22,1,.36,1) .65s both}
-.content-revealing h1{animation:title-rise 1.05s cubic-bezier(.16,1,.3,1) both}
-.content-revealing .fact{animation:fact-rise .72s cubic-bezier(.22,1,.36,1) both}
-.content-revealing .fact:nth-child(1){animation-delay:.52s}
-.content-revealing .fact:nth-child(2){animation-delay:.68s}
-.content-revealing .fact:nth-child(3){animation-delay:.84s}
-.content-revealing .fact:nth-child(4){animation-delay:1s}
-.mask-revealing .portal-heading{animation:portal-caption .85s cubic-bezier(.22,1,.36,1) both}
-.planet-list.is-switching .planet-item{animation:menu-row .58s cubic-bezier(.22,1,.36,1) both}
-.planet-list.is-switching .planet-item:nth-child(1){animation-delay:.02s}
-.planet-list.is-switching .planet-item:nth-child(2){animation-delay:.05s}
-.planet-list.is-switching .planet-item:nth-child(3){animation-delay:.08s}
-.planet-list.is-switching .planet-item:nth-child(4){animation-delay:.11s}
-.planet-list.is-switching .planet-item:nth-child(5){animation-delay:.14s}
-.planet-list.is-switching .planet-item:nth-child(6){animation-delay:.17s}
-.planet-list.is-switching .planet-item:nth-child(7){animation-delay:.2s}
-.planet-list.is-switching .planet-item:nth-child(8){animation-delay:.23s}
-.planet-list.is-switching .planet-item.active:before{animation:active-dot .55s cubic-bezier(.22,1,.36,1) .18s both}
-@keyframes reveal-down{from{opacity:0;filter:blur(8px);transform:translateY(-18px)}to{opacity:1;filter:blur(0);transform:translateY(0)}}
-@keyframes reveal-side{from{opacity:0;filter:blur(8px);transform:translate(-20px,-43%)}to{opacity:1;filter:blur(0);transform:translate(0,-43%)}}
-@keyframes title-rise{from{opacity:0;filter:blur(12px);transform:translate(-32px,42px)}to{opacity:1;filter:blur(0);transform:translate(-32px,0)}}
-@keyframes fact-rise{from{opacity:0;filter:blur(7px);transform:translateY(18px)}to{opacity:1;filter:blur(0);transform:translateY(0)}}
-@keyframes portal-caption{from{opacity:0;filter:blur(7px);transform:translateY(22px)}to{opacity:1;filter:blur(0);transform:translateY(0)}}
-@keyframes menu-row{from{opacity:.35;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
-@keyframes active-dot{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
-
-/* responsive */
-@media(max-width:900px){
-  .nav{display:none}
-  .portal-wrap{width:min(300px,48vw)}
-  .planet-content h1{font-size:clamp(105px,24vw,190px)}
-  .planet-content dl{width:43vw}
-  .fact{grid-template-columns:110px 1fr}
-  .planet-list{font-size:14px}
-  .planet-item.active{font-size:16px}
+:root{--u:min(calc(100vw/1600),calc(100vh/900));--ink:#0b0b10}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:#dcd8f4}
+body{color:var(--ink);font-family:"Space Mono",ui-monospace,monospace;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.track{height:800vh;position:relative}
+.view{position:sticky;top:0;height:100svh;overflow:hidden;background:#dcd8f4}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.ui{position:absolute;inset:0;pointer-events:none}
+.ui a,.ui button{pointer-events:auto}
+.logo{position:absolute;left:calc(30*var(--u));top:calc(20*var(--u));display:flex;align-items:center;gap:calc(14*var(--u));font:600 calc(25*var(--u))/1 Outfit,sans-serif;letter-spacing:-.01em}
+.logo svg{width:calc(30*var(--u));height:calc(30*var(--u));fill:currentColor;flex:none}
+.links{position:absolute;right:calc(38*var(--u));top:calc(24*var(--u));display:flex;gap:calc(18*var(--u));font-size:calc(13*var(--u));letter-spacing:.04em}
+.links a:hover{text-decoration:underline}
+.index{position:absolute;left:calc(19*var(--u));top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:calc(9*var(--u));font-size:calc(11*var(--u))}
+.index i{width:calc(3*var(--u));height:calc(3*var(--u));border-radius:50%;background:currentColor;opacity:.75}
+.index b{font-weight:400;opacity:.45;transition:opacity .3s}
+.index b.on{opacity:1}
+.bar{position:absolute;right:calc(10*var(--u));top:22%;bottom:22%;width:1px;background:rgba(11,11,16,.2)}
+.bar i{position:absolute;left:-1px;top:0;width:3px;height:9%;background:var(--ink);will-change:transform}
+.cap{position:absolute;left:50%;bottom:calc(30*var(--u));width:calc(680*var(--u));margin-left:calc(-340*var(--u));text-align:center;font:400 calc(23*var(--u))/1.18 Anton,sans-serif;text-transform:uppercase;letter-spacing:.012em}
+.cap svg{display:block;margin:0 auto calc(9*var(--u));width:calc(30*var(--u));height:calc(20*var(--u));fill:currentColor}
+.cap p{position:absolute;left:0;right:0;top:calc(29*var(--u));will-change:opacity}
+.cap{height:calc(84*var(--u))}
+.panel{position:absolute;top:50%;width:calc(330*var(--u));font:400 calc(25*var(--u))/1.14 Anton,sans-serif;text-transform:uppercase;letter-spacing:.012em;opacity:0;will-change:opacity,transform}
+.p1{left:calc(84*var(--u))}.p2{right:calc(84*var(--u));text-align:right}
+.sound{position:absolute;left:calc(30*var(--u));bottom:calc(30*var(--u));display:flex;align-items:center;gap:calc(7*var(--u));height:calc(30*var(--u));padding:0 calc(11*var(--u));border-radius:99px;background:var(--ink);color:#f3f0ff;font-size:calc(11*var(--u));letter-spacing:.04em}
+.sound span{display:flex;align-items:center;gap:calc(1.5*var(--u));height:calc(13*var(--u))}
+.sound span i{width:1px;height:30%;background:currentColor;transition:height .3s}
+.sound[aria-pressed=true] span i:nth-child(odd){height:100%}
+.sound[aria-pressed=true] span i:nth-child(even){height:60%}
+.up{position:absolute;right:calc(30*var(--u));bottom:calc(30*var(--u));display:grid;place-items:center;width:calc(34*var(--u));height:calc(34*var(--u));border-radius:50%;background:var(--ink);color:#f3f0ff;transition:transform .25s}
+.up:hover{transform:translateY(-2px)}
+.up svg{width:calc(16*var(--u));height:calc(16*var(--u));fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+button:focus-visible,a:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+@media (max-width:820px){
+  :root{--u:1px}
+  .logo{left:16px;top:16px;font-size:21px}
+  .links{right:16px;top:19px;font-size:12px}
+  .index{display:none}.bar{right:6px}
+  .cap{width:calc(100% - 32px);left:16px;margin:0;bottom:72px;font-size:19px;height:70px}
+  .cap svg{width:24px;height:16px;margin-bottom:6px}.cap p{top:22px}
+  .cap br{display:none}.cap{font-size:17px}
+  .panel{top:auto;bottom:72px;left:16px;right:16px;width:auto;text-align:left;font-size:21px}
+  .sound{left:16px;bottom:18px}.up{right:16px;bottom:18px}
 }
-@media(max-width:640px){
-  .experience{min-height:600px}
-  .planet-list{display:none}
-  .portal-wrap{top:44%;width:min(260px,66vw)}
-  .planet-content{left:18px;right:18px;bottom:18px;display:block}
-  .planet-content h1{font-size:clamp(98px,30vw,160px);margin-bottom:20px}
-  .planet-content dl{width:100%;font-size:13px}
-  .fact{grid-template-columns:92px 1fr;padding:5px 0}
-  .portal-heading{font-size:14px}
-  .portal-heading strong{font-size:16px}
-  .menu{height:38px}
-  .portal{border-radius:70px}
-}
-@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}.portal{transform:none!important}}
 </style>
 </head>
 <body>
-<main class="experience" data-planet="mars">
-  <div class="backgrounds" aria-hidden="true">
-    <video id="mars-background" class="background is-visible" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/3c83091e-4046-4fd6-adbb-2edb728be79a.mp4" muted playsinline preload="auto"></video>
-    <video id="earth-background" class="background" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/fc3ded42-e845-41f3-a830-5cab512d79cd.mp4" muted playsinline preload="auto"></video>
-    <video id="venus-background" class="background" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/b30f64d9-1637-477a-83df-d0fc6461a422.mp4" muted playsinline preload="auto"></video>
-  </div>
-  <div class="preloader" id="preloader" aria-label="Loading Mars">
-    <video id="preloader-video" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/5fc5651c-3b5d-4171-b507-87f7e635d1b4.mp4" muted playsinline preload="auto"></video>
-    <div class="preloader-shade"></div>
-  </div>
-  <img class="floating-logo" id="floating-logo" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/eb7e0f53-50cd-4af5-abc4-8b9a52cdc01b.svg" alt="Ubernatural">
-  <div class="preloader-count" id="preloader-count" aria-live="polite"><span id="preloader-value">0</span><span class="percent">%</span></div>
-  <canvas id="scene-canvas" class="scene-canvas" aria-hidden="true"></canvas>
-  <div class="shade" aria-hidden="true"></div>
-
-  <header class="header chrome">
-    <div class="header-actions">
-      <nav class="nav" aria-label="Primary navigation">
-        <a class="active" href="#about">About</a><a href="#explore">Explore</a><a href="#planets">Planets</a>
-      </nav>
-      <button class="menu" type="button">Menu</button>
+<div class="track" id="track">
+  <div class="view">
+    <canvas id="gl" aria-label="A pink jellyfish drifting in a lilac sky with giant words wrapping around it"></canvas>
+    <div class="ui">
+      <a class="logo" href="#" aria-label="TheInternetCompany"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 1.500 30 9.500 16 17.500 2 9.500Z"/><path opacity=".55" d="M2 9.500 16 17.500V31L2 23Z"/><path opacity=".8" d="M30 9.500 16 17.500V31L30 23Z"/><path fill="#dcd8f4" d="M6 17.200 12 20.600V26.800L6 23.400Z"/></svg>TheInternetCompany</a>
+      <nav class="links" aria-label="Main"><a href="#">[Works]</a><a href="#">[Agency]</a></nav>
+      <div class="index" id="index" aria-hidden="true"><i></i><b class="on">01</b><i></i><i></i><i></i><b>02</b><i></i><i></i><i></i><b>03</b><i></i><i></i><i></i><b>04</b><i></i><i></i><i></i><b>05</b><i></i></div>
+      <div class="bar" aria-hidden="true"><i id="thumb"></i></div>
+      <div class="cap">
+        <svg id="goggle" viewBox="0 0 30 20" aria-hidden="true"><path fill-rule="evenodd" d="M7 2h16a6 6 0 0 1 6 6v5a5 5 0 0 1-9 3l-2-3h-6l-2 3a5 5 0 0 1-9-3V8a6 6 0 0 1 6-6Zm1 5a3.500 3.500 0 1 0 0 7 3.500 3.500 0 0 0 0-7Zm14 0a3.500 3.500 0 1 0 0 7 3.500 3.500 0 0 0 0-7Z"/></svg>
+        <p id="c1">Welcome to a 3D house and design studio crafting <br>websites, apps and worlds for the modern internet</p>
+        <p id="c2" style="opacity:0">From first sketch to shipped product, <br>we design and build it all under one roof</p>
+      </div>
+      <p class="panel p1" id="p1">TheInternetCompany designs and builds fast websites, polished apps and real-time 3D experiences</p>
+      <p class="panel p2" id="p2">Have a product, brand or idea in mind? Let us shape it into something people love to use.</p>
+      <button class="sound" id="sound" aria-pressed="false" aria-label="Ambient sound"><span aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><em style="font-style:normal" id="st">OFF</em></button>
+      <button class="up" id="up" aria-label="Back to top"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14V2M3 7l5-5 5 5"/></svg></button>
     </div>
-  </header>
-
-  <aside class="planet-list chrome" aria-label="Planets"></aside>
-
-  <canvas id="portal-canvas" class="portal-canvas" aria-hidden="true"></canvas>
-  <section class="portal-wrap chrome" aria-label="Next destination">
-    <div class="portal-heading">
-      <span>Next:</span>
-      <span><span id="next-number">[03]</span> <strong id="next-name">Earth</strong></span>
-    </div>
-    <button class="portal" id="portal" type="button" aria-label="Travel to Earth">
-      <video id="portal-video" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/fc3ded42-e845-41f3-a830-5cab512d79cd.mp4" muted playsinline preload="auto"></video>
-      <img id="portal-image" src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/d6fb8b6b-c15e-4aaa-9cf7-45bbb5e33372.jpg" alt="Mercury">
-    </button>
-  </section>
-
-  <section class="planet-content chrome" aria-live="polite">
-    <h1 id="planet-title">MARS</h1>
-    <dl id="facts"></dl>
-  </section>
-
-  <div class="transition-layer" aria-hidden="true"><video id="transition-video" muted playsinline preload="auto"></video></div>
-  <div class="loading" aria-hidden="true">Preparing orbit…</div>
-  <div class="custom-cursor" aria-hidden="true">
-    <span class="cursor-orbit"></span><span class="cursor-dot"></span><span class="cursor-label">Enter</span>
   </div>
-</main>
-
+</div>
 <script>
-(() => {
-'use strict';
+const SKY='https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261102_045255_3cb4b3c2-3cb5-4af9-93b4-bd88f2f883c3.png&w=1920&q=80';
+const STILL='https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261102_045249_4f7fe287-c84b-479f-a953-04990fe1a3ac.png&w=1080&q=85';
+const VIDEO='https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261102_045327_a6584765-3154-43e6-b1c9-4e574f83a811.mp4';
+const WORDS=['THE INTERNET','COMPANY','WEBSITES','APPS + 3D','DESIGN'];
+const STEP=.14,GAP=3.4,RADIUS=9,CAM=11,FOCAL=8.14;
+const $=id=>document.getElementById(id),clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const smooth=(a,b,x)=>{x=clamp((x-a)/(b-a));return x*x*(3-2*x)},ease=x=>x*x*x*(x*(6*x-15)+10);
+const cv=$('gl'),gl=cv.getContext('webgl2',{alpha:false,antialias:true,premultipliedAlpha:true});
+const calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+function program(vs,fs,names){
+  const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,'#version 300 es\nprecision highp float;\n'+s);gl.compileShader(o);
+    if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))console.error(gl.getShaderInfoLog(o));return o};
+  const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,vs));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);
+  const u={};names.forEach(n=>u[n]=gl.getUniformLocation(p,n));return{p,u};
+}
+const QUAD=`out vec2 v;void main(){vec2 c=vec2((gl_VertexID<<1)&2,gl_VertexID&2);v=c;gl_Position=vec4(c*2.-1.,0,1);}`;
+const skyP=program(QUAD,`in vec2 v;uniform sampler2D T;uniform vec3 C;out vec4 O;
+  void main(){vec2 uv=vec2(.5)+(v-.5)*C.xy;uv.y=1.-uv.y;uv.x+=C.z;O=textureLod(T,uv,1.6);}`,['T','C']);
+const wordP=program(`layout(location=0) in vec2 a;uniform vec4 W;uniform vec4 B;uniform float A;uniform vec3 L;out vec2 v;
+  void main(){
+    float t=(a.x-.5)*W.x+W.y;
+    float th=clamp(t/${RADIUS.toFixed(1)},-1.45,1.45);
+    float x=${RADIUS.toFixed(1)}*sin(th),z=${RADIUS.toFixed(1)}*(1.-cos(th))*.82;
+    float y=(a.y-.5)*L.x+L.y-L.z-3.6*pow(smoothstep(.8,8.,t),1.25)-.012*t*t;
+    v=vec2(mix(B.x,B.z,a.x),mix(B.w,B.y,a.y));
+    gl_Position=vec4(x*${FOCAL.toFixed(2)}/A,y*${FOCAL.toFixed(2)},0.,${CAM.toFixed(1)}-z);
+  }`,`in vec2 v;uniform sampler2D T;out vec4 O;void main(){float a=texture(T,v).a;O=vec4(vec3(.043,.043,.063)*a,a);}`,['W','B','A','L','T']);
+const dotP=program(`layout(location=0) in vec4 a;uniform float S,H,P;out float k;out float r;
+  void main(){k=a.w;float y=fract(a.y+S*.012*(.4+a.z))*2.3-1.15;float x=fract(a.x+H*(a.w>.5?.035:.004))*2.4-1.2+.03*sin(S*.2+a.z*9.);
+    gl_Position=vec4(x,y,0,1);gl_PointSize=(a.w>.5?5.+a.z*15.:5.+a.z*24.)*P;r=S*.6+a.z*7.+H;}`,
+  `in float k;in float r;out vec4 O;void main(){vec2 p=gl_PointCoord-.5;
+    if(k>.5){float c=cos(r),s=sin(r);p=mat2(c,-s,s,c)*p;float a=step(max(abs(p.x),abs(p.y)),.3);O=vec4(vec3(.04)*a,a);}
+    else{float a=smoothstep(.5,.1,length(p))*.62;O=vec4(vec3(1.)*a,a);}}`,['S','H','P']);
+const jellyP=program(`uniform mat3 M;out vec2 v;void main(){vec2 c=vec2((gl_VertexID<<1)&2,gl_VertexID&2);if(gl_VertexID==3)c=vec2(2,2);c*=.5;v=vec2(c.x,1.-c.y);gl_Position=vec4((M*vec3(c-.5,1.)).xy,0,1);}`,
+  `in vec2 v;uniform sampler2D T;out vec4 O;void main(){
+    vec3 c=texture(T,v).rgb;
+    float d=c.g-max(c.r,c.b);
+    float a=1.-smoothstep(.10,.38,d);
+    c.g=min(c.g,max(c.r,c.b)*.96);
+    O=vec4(c*a,a);}`,['M','T']);
 
-const BASE = 'https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P';
-const TO_EARTH = BASE + '/fc3ded42-e845-41f3-a830-5cab512d79cd.mp4';
-const TO_VENUS = BASE + '/b30f64d9-1637-477a-83df-d0fc6461a422.mp4';
-const MERCURY  = BASE + '/d6fb8b6b-c15e-4aaa-9cf7-45bbb5e33372.jpg';
+// word atlas: one row per word, cut to its measured width
+const ROW=512,EM=440,atlas=document.createElement('canvas');atlas.width=4096;atlas.height=ROW*WORDS.length;
+let layout=[];
+function drawAtlas(){
+  const x=atlas.getContext('2d');x.clearRect(0,0,atlas.width,atlas.height);x.font=`${EM}px Anton`;x.textBaseline='alphabetic';x.fillStyle='#000';x.textAlign='left';
+  x.letterSpacing='8px';let c=0;layout=[];
+  WORDS.forEach((w,i)=>{
+    const m=x.measureText(w).width+16;x.fillText(w,8,i*ROW+EM*.92+6);
+    const uW=m/EM*.86;layout.push({len:uW,c:c+uW/2,u:m/atlas.width,top:i/WORDS.length,bot:(i+1)/WORDS.length});c+=uW+GAP;
+  });
+}
+const tex=(unit,filter)=>{const t=gl.createTexture();gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,t);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,filter);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);return t};
+const tSky=tex(0,gl.LINEAR_MIPMAP_LINEAR),tWords=tex(1,gl.LINEAR_MIPMAP_LINEAR),tJelly=tex(2,gl.LINEAR);
+gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([0,255,0,255]));
+const aniso=gl.getExtension('EXT_texture_filter_anisotropic');
+function load(url){return new Promise(r=>{const i=new Image;i.crossOrigin='anonymous';i.onload=()=>r(i);i.onerror=()=>r(null);i.src=url})}
 
-const planets = ['Mercury','Venus','Earth','Mars','Jupiter','Saturn','Uranus','Neptune'];
-const states = {
-  mars: { name:'Mars', next:'Earth', number:'[03]', portal:TO_EARTH, background:'mars-background',
-    facts:[['Distance:','About 228 million km (1.5 astronomical units).'],
-           ['Year:','One Martian year is equal to 687 Earth days.'],
-           ['Temperature:','Around -60 °C, dropping to -125 °C at the poles in winter.'],
-           ['Atmosphere:','Very thin, consisting of 95% carbon dioxide, with frequent dust storms.']] },
-  earth: { name:'Earth', next:'Venus', number:'[02]', portal:TO_VENUS, background:'earth-background',
-    facts:[['Distance:','149.6 million km from the Sun.'],
-           ['Year:','365.25 Earth days.'],
-           ['Temperature:','Average surface temperature around 15 °C.'],
-           ['Atmosphere:','Mostly nitrogen and oxygen, supporting life and liquid water.']] },
-  venus: { name:'Venus', next:'Mercury', number:'[06]', image:MERCURY, background:'venus-background',
-    facts:[['Distance:','108.2 million km from the Sun.'],
-           ['Year:','225 Earth days.'],
-           ['Temperature:','Around 465 °C — the hottest planet in the Solar System.'],
-           ['Atmosphere:','Extremely dense, mostly carbon dioxide, with clouds of sulfuric acid.']] }
+const cols=56,ribbon=new Float32Array((cols+1)*4);
+for(let i=0;i<=cols;i++){ribbon.set([i/cols,0,i/cols,1],i*4)}
+const vaoW=gl.createVertexArray();gl.bindVertexArray(vaoW);gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,ribbon,gl.STATIC_DRAW);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+const dots=[];let sd=7;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
+for(let i=0;i<40;i++)dots.push(rnd(),rnd(),rnd(),i%4?0:1);
+const vaoD=gl.createVertexArray();gl.bindVertexArray(vaoD);gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(dots),gl.STATIC_DRAW);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,4,gl.FLOAT,false,0,0);
+const vaoE=gl.createVertexArray();
+
+const video=document.createElement('video');video.crossOrigin='anonymous';video.muted=true;video.loop=true;video.playsInline=true;video.preload='auto';video.src=VIDEO;
+let W=1,H=1,dpr=1,asp=1,haveVid=false,lastT=-1;
+function size(){dpr=Math.min(devicePixelRatio||1,2);W=Math.round(cv.clientWidth*dpr);H=Math.round(cv.clientHeight*dpr);cv.width=W;cv.height=H;asp=W/H;gl.viewport(0,0,W,H)}
+addEventListener('resize',size);
+
+function pushVideo(){
+  if(video.readyState<2||video.currentTime===lastT)return;
+  lastT=video.currentTime;haveVid=true;gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,tJelly);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,video);
+}
+function draw(s,sec){
+  pushVideo();
+  const n=WORDS.length,span=STEP*(n-1),k=clamp(s/span)*(n-1),i=Math.min(n-2,Math.floor(k)),f=k-i;
+  const c0=layout[i].c,c1=layout[i+1].c,head=c0+(c1-c0)*ease(f);
+  const sink=ease(smooth(span+.015,span+.105,s))*6;
+  const grow=ease(smooth(span+.08,span+.22,s)),side=smooth(.76,.82,s)-2*smooth(.88,.94,s);
+  // sky
+  gl.disable(gl.BLEND);gl.useProgram(skyP.p);gl.bindVertexArray(vaoE);
+  gl.uniform1i(skyP.u.T,0);const ca=asp/(16/9),fx=ca>1?1:ca,fy=ca>1?1/ca:1;gl.uniform3f(skyP.u.C,fx*.92,fy*.92,s*.05+sec*.0022);gl.drawArrays(gl.TRIANGLES,0,3);
+  gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+  // points
+  gl.useProgram(dotP.p);gl.bindVertexArray(vaoD);gl.uniform1f(dotP.u.S,sec);gl.uniform1f(dotP.u.H,head*.1+s*4);gl.uniform1f(dotP.u.P,dpr*H/dpr/900);gl.drawArrays(gl.POINTS,0,40);
+  // words
+  gl.useProgram(wordP.p);gl.bindVertexArray(vaoW);gl.uniform1i(wordP.u.T,1);gl.uniform1f(wordP.u.A,asp);
+  const hs=clamp(asp*.58,.26,1);gl.uniform3f(wordP.u.L,hs,.19+.1*(1-hs),sink);
+  layout.forEach(w=>{const t=w.c-head;if(Math.abs(t)>24)return;
+    gl.uniform4f(wordP.u.W,w.len*hs,t*hs,0,0);gl.uniform4f(wordP.u.B,0,w.top,w.u,w.bot);gl.drawArrays(gl.TRIANGLE_STRIP,0,(cols+1)*2)});
+  // jellyfish
+  gl.useProgram(jellyP.p);gl.bindVertexArray(vaoE);gl.uniform1i(jellyP.u.T,2);
+  const h=(.98+grow*.42)*clamp(.62+asp*.4,.6,1),w=h*(1080/1920)/asp*(.93+.07*Math.cos(s*14));
+  const roll=(.1*Math.sin(s*13+.4)+.03*Math.sin(sec*.5))*(1+grow*.5),co=Math.cos(roll),si=Math.sin(roll);
+  const ox=(mx*.018+side*.34*Math.min(1,asp)),oy=.03+.018*Math.sin(sec*.8)+my*.018-grow*.1;
+  gl.uniformMatrix3fv(jellyP.u.M,false,[w*2*co,w*2*si*asp,0,-h*2*si/asp,h*2*co,0,ox,oy,1]);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  ui(s,k);
+}
+let lastIdx=0;const marks=[...$('index').querySelectorAll('b')];
+function ui(s,k){
+  const op=(a,b,c,d)=>smooth(a,b,s)*(1-smooth(c,d,s));
+  const c1=1-smooth(.04,.08,s),c2=op(.08,.12,.56,.62);$('c1').style.opacity=c1;$('c2').style.opacity=c2;$('goggle').style.opacity=Math.max(c1,c2);
+  const a=op(.72,.77,.84,.88),b=op(.9,.95,1.1,1.2);
+  $('p1').style.opacity=a;$('p1').style.transform=`translateY(calc(-50% + ${(1-a)*18}px))`;
+  $('p2').style.opacity=b;$('p2').style.transform=`translateY(calc(-50% + ${(1-b)*18}px))`;
+  const idx=Math.round(k);if(idx!==lastIdx){marks[lastIdx].classList.remove('on');marks[idx].classList.add('on');lastIdx=idx}
+  $('thumb').style.transform=`translateY(${(s*1011).toFixed(1)}%)`;
+}
+
+let target=0,now=0,mx=0,my=0,tmx=0,tmy=0;
+const read=()=>{const r=$('track').getBoundingClientRect(),m=r.height-innerHeight;target=clamp(-r.top/m)};
+addEventListener('scroll',read,{passive:true});
+addEventListener('pointermove',e=>{tmx=e.clientX/innerWidth*2-1;tmy=1-e.clientY/innerHeight*2});
+function loop(t){
+  now+=(target-now)*(calm?1:.1);mx+=(tmx-mx)*.05;my+=(tmy-my)*.05;draw(now,t/1000);
+  requestAnimationFrame(loop);
+}
+$('up').onclick=()=>scrollTo({top:0,behavior:calm?'auto':'smooth'});
+
+let ctx,gain;
+$('sound').onclick=()=>{
+  const b=$('sound'),on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);$('st').textContent=on?'ON':'OFF';
+  if(!ctx){
+    ctx=new AudioContext;gain=ctx.createGain();gain.gain.value=0;
+    const n=ctx.createBuffer(2,ctx.sampleRate*4,ctx.sampleRate);
+    for(let c=0;c<2;c++){const d=n.getChannelData(c);let l=0;for(let i=0;i<d.length;i++){l=(l+.02*(Math.random()*2-1))/1.02;d[i]=l*3.5}}
+    const src=ctx.createBufferSource();src.buffer=n;src.loop=true;
+    const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=520;
+    const lfo=ctx.createOscillator(),lg=ctx.createGain();lfo.frequency.value=.09;lg.gain.value=240;lfo.connect(lg).connect(lp.frequency);
+    src.connect(lp).connect(gain).connect(ctx.destination);src.start();lfo.start();
+  }
+  ctx.resume();gain.gain.setTargetAtTime(on?.34:0,ctx.currentTime,.4);
 };
 
-const $ = id => document.getElementById(id);
-const exp = document.querySelector('.experience');
-const planetList = document.querySelector('.planet-list');
-const portal = $('portal'), portalVideo = $('portal-video'), portalImage = $('portal-image');
-const transitionVideo = $('transition-video');
-const canvas = $('portal-canvas'), ctx = canvas.getContext('2d');
-const sceneCanvas = $('scene-canvas'), sceneCtx = sceneCanvas.getContext('2d');
-const backgrounds = [...document.querySelectorAll('.background')];
-
-let current = 'mars';
-let rendered = false;
-let busy = false;
-let hasScene = false;
-let transitionActive = false;
-let expansion = 0, maskScale = 0, canvasOpacity = 1;
-let rotX = 0, rotY = 0, targetX = 0, targetY = 0;
-let portalSrc = portalVideo.getAttribute('src');
-
-const ease = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
-const delay = ms => new Promise(r => setTimeout(r, ms));
-const frame = () => new Promise(r => requestAnimationFrame(() => r()));
-
-function animateValue(setter, duration) {
-  return new Promise(resolve => {
-    const start = performance.now();
-    const step = now => {
-      const t = Math.min(1, (now - start) / duration);
-      setter(ease(t));
-      if (t < 1) requestAnimationFrame(step); else resolve();
-    };
-    requestAnimationFrame(step);
-  });
-}
-
-function waitEvent(el, events, timeout) {
-  return new Promise(resolve => {
-    let done = false;
-    const list = [].concat(events, 'error');
-    const fin = () => {
-      if (done) return;
-      done = true;
-      list.forEach(e => el.removeEventListener(e, fin));
-      clearTimeout(timer);
-      resolve();
-    };
-    list.forEach(e => el.addEventListener(e, fin));
-    const timer = setTimeout(fin, timeout);
-  });
-}
-
-function waitMedia(el) {
-  if (el.tagName === 'IMG') {
-    return el.complete ? Promise.resolve() : waitEvent(el, 'load', 5000);
-  }
-  return el.readyState >= 2 ? Promise.resolve() : waitEvent(el, 'loadeddata', 6000);
-}
-
-function retrigger(el, cls) {
-  el.classList.remove(cls);
-  void el.offsetWidth;
-  el.classList.add(cls);
-}
-
-/* ---------- render ---------- */
-function render() {
-  const s = states[current];
-  exp.dataset.planet = current;
-  $('planet-title').textContent = s.name.toUpperCase();
-  $('next-name').textContent = s.next;
-  $('next-number').textContent = s.number;
-  portal.setAttribute('aria-label', 'Travel to ' + s.next);
-
-  const facts = $('facts');
-  facts.textContent = '';
-  s.facts.forEach(([k, v]) => {
-    const row = document.createElement('div');
-    row.className = 'fact';
-    const dt = document.createElement('dt'); dt.textContent = k;
-    const dd = document.createElement('dd'); dd.textContent = v;
-    row.append(dt, dd);
-    facts.appendChild(row);
-  });
-
-  planetList.textContent = '';
-  planets.forEach(name => {
-    const item = document.createElement('span');
-    item.className = 'planet-item' + (name === s.name ? ' active' : '');
-    item.textContent = name;
-    planetList.appendChild(item);
-  });
-  if (rendered) retrigger(planetList, 'is-switching');
-  rendered = true;
-
-  backgrounds.forEach(v => v.classList.toggle('is-visible', v.id === s.background));
-
-  if (s.image) {
-    portalImage.style.display = '';
-    portalVideo.style.display = 'none';
-    portalVideo.pause();
-  } else {
-    portalImage.style.display = 'none';
-    portalVideo.style.display = '';
-    if (portalSrc !== s.portal) {
-      portalSrc = s.portal;
-      portalVideo.src = s.portal;
-      portalVideo.load();
-    }
-    portalVideo.loop = true;
-    portalVideo.play().catch(() => {});
-  }
-}
-
-function revealMask() {
-  retrigger(exp, 'mask-revealing');
-  maskScale = 0;
-  return animateValue(v => { maskScale = v; }, 1050);
-}
-function revealPlanetContent() { retrigger(exp, 'content-revealing'); }
-
-/* ---------- canvas ---------- */
-function resizeCanvas() {
-  const d = Math.min(window.devicePixelRatio || 1, 2);
-  const w = window.innerWidth, h = window.innerHeight;
-  canvas.width = w * d; canvas.height = h * d;
-  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
-  ctx.setTransform(d, 0, 0, d, 0, 0);
-  if (!hasScene) {
-    sceneCanvas.width = w * d; sceneCanvas.height = h * d;
-    sceneCanvas.style.width = w + 'px'; sceneCanvas.style.height = h + 'px';
-    sceneCtx.setTransform(d, 0, 0, d, 0, 0);
-  }
-}
-
-function drawCover(c, media) {
-  const mw = media.videoWidth || media.naturalWidth;
-  const mh = media.videoHeight || media.naturalHeight;
-  if (!mw || !mh) return;
-  const iw = window.innerWidth, ih = window.innerHeight;
-  const scale = Math.max(iw / mw, ih / mh);
-  const w = mw * scale, h = mh * scale;
-  try { c.drawImage(media, (iw - w) / 2, (ih - h) / 2, w, h); } catch (e) {}
-}
-
-function drawShade(c) {
-  const iw = window.innerWidth, ih = window.innerHeight;
-  const g = c.createLinearGradient(0, ih * .52, 0, ih);
-  g.addColorStop(0, 'rgba(0,0,0,0)');
-  g.addColorStop(1, 'rgba(0,0,0,.88)');
-  c.fillStyle = g;
-  c.fillRect(0, ih * .52, iw, ih * .48);
-}
-
-function roundedPoints(w, h, r) {
-  r = Math.max(0, Math.min(r, w / 2, h / 2));
-  const P = Math.PI;
-  const corners = [
-    [ w/2 - r, -h/2 + r, -P/2, 0 ],
-    [ w/2 - r,  h/2 - r, 0, P/2 ],
-    [-w/2 + r,  h/2 - r, P/2, P ],
-    [-w/2 + r, -h/2 + r, P, P * 1.5 ]
-  ];
-  const pts = [];
-  corners.forEach(([cx, cy, a0, a1]) => {
-    for (let i = 0; i <= 10; i++) {
-      const a = a0 + (a1 - a0) * (i / 10);
-      pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
-    }
-  });
-  return pts;
-}
-
-function project(x, y, cx, cy, rx, ry) {
-  const ax = rx * Math.PI / 180, ay = ry * Math.PI / 180;
-  const xx = x * Math.cos(ay);
-  const yy = y * Math.cos(ax);
-  const z = x * Math.sin(ay) - y * Math.sin(ax);
-  const p = 850 / (850 + z);
-  return [cx + xx * p, cy + yy * p];
-}
-
-let last = performance.now();
-function draw(now) {
-  const dt = Math.min(40, now - last);
-  last = now;
-  const iw = window.innerWidth, ih = window.innerHeight;
-
-  const k = Math.min(1, dt * .009);
-  rotX += (targetX - rotX) * k;
-  rotY += (targetY - rotY) * k;
-
-  ctx.clearRect(0, 0, iw, ih);
-  if (hasScene) {
-    ctx.drawImage(sceneCanvas, 0, 0, iw, ih);
-    drawShade(ctx);
-  }
-
-  const rect = portal.getBoundingClientRect();
-  const e = expansion;
-  const rcx = rect.left + rect.width / 2, rcy = rect.top + rect.height / 2;
-  const cx = rcx + (iw / 2 - rcx) * e;
-  const cy = rcy + (ih / 2 - rcy) * e;
-  const baseW = rect.width + (iw - rect.width) * e;
-  const baseH = rect.height + (ih - rect.height) * e;
-  const scale = e ? 1 : maskScale;
-  const w = baseW * scale, h = baseH * scale;
-  const r = 90 * (1 - e) * scale;
-  const rx = rotX * (1 - e), ry = rotY * (1 - e);
-
-  if (w > 1 && h > 1) {
-    const pts = roundedPoints(w, h, r);
-    ctx.save();
-    ctx.globalAlpha = canvasOpacity;
-    ctx.beginPath();
-    pts.forEach(([x, y], i) => {
-      const [sx, sy] = project(x, y, cx, cy, rx, ry);
-      if (i) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy);
-    });
-    ctx.closePath();
-    ctx.clip();
-    ctx.fillStyle = '#030303';
-    ctx.fillRect(0, 0, iw, ih);
-    const media = transitionActive ? transitionVideo : (states[current].image ? portalImage : portalVideo);
-    drawCover(ctx, media);
-    if (transitionActive) drawShade(ctx);
-    ctx.restore();
-  }
-  requestAnimationFrame(draw);
-}
-
-/* ---------- pointer ---------- */
-window.addEventListener('pointermove', ev => {
-  if (busy) return;
-  targetY = (ev.clientX / window.innerWidth - .5) * 37.4;
-  targetX = (ev.clientY / window.innerHeight - .5) * -33;
+Promise.all([load(SKY),load(STILL),document.fonts.load(`${EM}px Anton`,'THE INTERNET')]).then(([sky,still])=>{
+  drawAtlas();
+  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tSky);if(sky){gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,sky);gl.generateMipmap(gl.TEXTURE_2D)}
+  gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,tWords);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,atlas);gl.generateMipmap(gl.TEXTURE_2D);
+  if(aniso)gl.texParameterf(gl.TEXTURE_2D,aniso.TEXTURE_MAX_ANISOTROPY_EXT,8);
+  if(still){gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,tJelly);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,still)}
+  if(!calm)video.play().catch(()=>{});
+  size();read();now=target;requestAnimationFrame(loop);
 });
-document.documentElement.addEventListener('pointerleave', () => { targetX = targetY = 0; });
-
-/* ---------- travel ---------- */
-async function travel() {
-  if (busy || current === 'venus') return;
-  busy = true;
-  targetX = targetY = 0;
-  const next = current === 'mars' ? 'earth' : 'venus';
-  try {
-    transitionVideo.src = states[current].portal;
-    transitionVideo.load();
-    exp.classList.add('is-loading');
-    await waitEvent(transitionVideo, 'canplaythrough', 1600);
-    exp.classList.remove('is-loading', 'content-revealing', 'mask-revealing');
-    exp.classList.add('is-transitioning');
-    transitionVideo.currentTime = 0;
-    transitionVideo.playbackRate = 1.3;
-    canvasOpacity = 1;
-    transitionActive = true;
-    await transitionVideo.play();
-    await animateValue(v => { expansion = v; }, 1100);
-    if (!transitionVideo.ended) {
-      const d = (transitionVideo.duration || 6) / 1.3;
-      await waitEvent(transitionVideo, 'ended', d * 1000 + 3000);
-    }
-
-    // freeze final frame
-    const d = Math.min(window.devicePixelRatio || 1, 2);
-    sceneCanvas.width = window.innerWidth * d;
-    sceneCanvas.height = window.innerHeight * d;
-    sceneCtx.setTransform(d, 0, 0, d, 0, 0);
-    sceneCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    drawCover(sceneCtx, transitionVideo);
-    hasScene = true;
-
-    current = next;
-    exp.classList.add('is-committing');
-    render();
-    await frame(); await frame();
-    transitionActive = false;
-    expansion = 0; maskScale = 0; canvasOpacity = 1;
-    exp.classList.remove('is-transitioning', 'is-committing');
-
-    const maskReveal = revealMask();
-    setTimeout(revealPlanetContent, 100);
-    await maskReveal;
-    await delay(450);
-    transitionVideo.removeAttribute('src');
-    transitionVideo.load();
-    busy = false;
-  } catch (err) {
-    transitionActive = false;
-    expansion = 0; maskScale = 1; canvasOpacity = 1;
-    exp.classList.remove('is-transitioning', 'is-committing', 'is-loading');
-    busy = false;
-  }
-}
-portal.addEventListener('click', travel);
-
-/* ---------- cursor ---------- */
-const cursor = document.querySelector('.custom-cursor');
-let mx = window.innerWidth / 2, my = window.innerHeight / 2, cx0 = mx, cy0 = my;
-window.addEventListener('pointermove', ev => {
-  mx = ev.clientX; my = ev.clientY;
-  if (!cursor.classList.contains('is-visible')) {
-    cx0 = mx; cy0 = my;
-    cursor.classList.add('is-visible');
-  }
-});
-document.addEventListener('mouseleave', () => cursor.classList.remove('is-visible'));
-portal.addEventListener('pointerenter', () => cursor.classList.add('is-enter'));
-portal.addEventListener('pointerleave', () => cursor.classList.remove('is-enter'));
-function cursorLoop() {
-  cx0 += (mx - cx0) * .2;
-  cy0 += (my - cy0) * .2;
-  cursor.style.transform = 'translate3d(' + cx0 + 'px,' + cy0 + 'px,0)';
-  requestAnimationFrame(cursorLoop);
-}
-
-/* ---------- preloader ---------- */
-async function startExperience() {
-  await waitMedia(states[current].image ? portalImage : portalVideo);
-  await revealMask();
-  document.body.classList.add('intro-ready');
-  setTimeout(revealPlanetContent, 850);
-}
-
-function runPreloader() {
-  const video = $('preloader-video');
-  const value = $('preloader-value');
-  const count = $('preloader-count');
-  const logo = $('floating-logo');
-  const pre = $('preloader');
-  let finished = false;
-
-  function finish() {
-    if (finished) return;
-    finished = true;
-    value.textContent = '100';
-    count.classList.add('is-leaving');
-    logo.classList.add('is-docked');
-    pre.classList.add('is-background');
-    document.body.classList.add('preload-complete');
-    startExperience();
-    setTimeout(() => count.remove(), 750);
-    setTimeout(() => logo.classList.add('is-settled'), 2000);
-  }
-
-  const tick = () => {
-    if (finished) return;
-    if (video.duration) value.textContent = Math.round(video.currentTime / video.duration * 100);
-    requestAnimationFrame(tick);
-  };
-
-  const go = () => {
-    if (finished) return;
-    if (!video.duration || !isFinite(video.duration)) { finish(); return; }
-    video.playbackRate = Math.max(.25, video.duration / 3);
-    video.addEventListener('ended', finish, { once: true });
-    video.play().then(() => requestAnimationFrame(tick)).catch(finish);
-    setTimeout(finish, 3000 + video.duration / video.playbackRate * 1000 + 2000);
-  };
-
-  if (video.readyState >= 1) go();
-  else {
-    video.addEventListener('loadedmetadata', go, { once: true });
-    video.addEventListener('error', finish, { once: true });
-    setTimeout(() => { if (video.readyState < 1) finish(); }, 8000);
-  }
-}
-
-/* ---------- boot ---------- */
-backgrounds.forEach(v => { v.pause(); try { v.currentTime = 0; } catch (e) {} });
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-render();
-requestAnimationFrame(draw);
-requestAnimationFrame(cursorLoop);
-runPreloader();
-})();
 </script>
 </body>
 </html>
